@@ -1,0 +1,17 @@
+# Tells Docker to run one Postgres database with the pgvector add-on baked in.
+# Start it with:  docker compose up -d
+services:
+  db:
+    image: pgvector/pgvector:pg17   # Postgres 17, pgvector already installed
+    container_name: askmydocs-db
+    environment:
+      POSTGRES_DB: askmydocs
+      POSTGRES_USER: askmydocs
+      POSTGRES_PASSWORD: askmydocs
+    ports:
+      - "5432:5432"                 # laptop port 5432 -> container port 5432
+    volumes:
+      - db-data:/var/lib/postgresql/data   # keeps the data when the container stops
+
+volumes:
+  db-data:

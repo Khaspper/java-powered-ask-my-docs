@@ -16,7 +16,7 @@ Ask my docs
 │   └── [x] A2  GET /ping -> "pong"
 │
 ├── B. It stores files                (needs A1)
-│   ├── [ ] B1  Postgres + pgvector running in Docker
+│   ├── [x] B1  Postgres + pgvector running in Docker
 │   ├── [ ] B2  documents table + Java class for it
 │   ├── [ ] B3  POST /documents  - txt/md/pdf, 409 on duplicate
 │   └── [ ] B4  GET /documents   - summary rows

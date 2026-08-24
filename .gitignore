@@ -35,3 +35,6 @@ build/
 ### Session scratch - not part of the project ###
 CONTEXT.md
 HANDOFF.md
+
+# Claude notes and handoff docs - not part of the app
+handoff/
