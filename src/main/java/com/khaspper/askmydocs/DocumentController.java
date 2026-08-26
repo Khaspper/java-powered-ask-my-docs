@@ -67,7 +67,7 @@ public class DocumentController {
         List<Chunk> toSave = new ArrayList<>();
         int position = 0;
         for (String slice : slices) {
-            Chunk chunk = new Chunk(slice, position, saved.getId());
+            Chunk chunk = new Chunk(slice, position, saved);
             toSave.add(chunk);
             position += 1;
         }
