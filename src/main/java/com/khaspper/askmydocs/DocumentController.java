@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.ArrayList;
 
 @RestController
 public class DocumentController {
@@ -22,10 +24,12 @@ public class DocumentController {
 
     private final DocumentRepository documents;
     private final TextExtractor textExtractor;
+    private final ChunkRepository chunks;
 
-    public DocumentController(DocumentRepository documents, TextExtractor textExtractor) {
+    public DocumentController(DocumentRepository documents, TextExtractor textExtractor, ChunkRepository chunks) {
         this.documents = documents;
         this.textExtractor = textExtractor;
+        this.chunks = chunks;
     }
 
     public record UploadResponse(Long id, String filename) {
@@ -59,6 +63,15 @@ public class DocumentController {
 
         String text = textExtractor.extract(bytes, extension);
         Document saved = documents.save(new Document(filename, extension, sha256, text));
+        List<String> slices = TextChunker.chunk(text);
+        List<Chunk> toSave = new ArrayList<>();
+        int position = 0;
+        for (String slice : slices) {
+            Chunk chunk = new Chunk(slice, position, saved.getId());
+            toSave.add(chunk);
+            position += 1;
+        }
+        chunks.saveAll(toSave);
         return new UploadResponse(saved.getId(), saved.getFilename());
     }
 
