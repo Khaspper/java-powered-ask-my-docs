@@ -38,6 +38,14 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Pulls the words out of a PDF. Spring does not manage this one,
+		     so the version is pinned by hand. -->
+		<dependency>
+			<groupId>org.apache.pdfbox</groupId>
+			<artifactId>pdfbox</artifactId>
+			<version>3.0.5</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
