@@ -3,8 +3,10 @@ package com.khaspper.askmydocs;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -58,6 +60,17 @@ public class DocumentController {
         String text = textExtractor.extract(bytes, extension);
         Document saved = documents.save(new Document(filename, extension, sha256, text));
         return new UploadResponse(saved.getId(), saved.getFilename());
+    }
+
+    // One row of the list
+    public record DocumentSummary(Long id, String filename, Instant uploadedAt) {
+    }
+
+    @GetMapping("/documents")
+    public List<DocumentSummary> list() {
+        return documents.findAll().stream()
+                .map(d -> new DocumentSummary(d.getId(), d.getFilename(), d.getUploadedAt()))
+                .toList();
     }
 
     // grab extention
