@@ -6,6 +6,8 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,17 +21,22 @@ import java.util.ArrayList;
 @RestController
 public class DocumentController {
 
+    private static final Logger log = LoggerFactory.getLogger(DocumentController.class);
+
     private static final List<String> ALLOWED = List.of("txt", "md", "pdf");
     private static final long MAX_BYTES = 10L * 1024 * 1024;  // 10 MB
 
     private final DocumentRepository documents;
     private final TextExtractor textExtractor;
     private final ChunkRepository chunks;
+    private final Embedder embedder;
 
-    public DocumentController(DocumentRepository documents, TextExtractor textExtractor, ChunkRepository chunks) {
+    public DocumentController(DocumentRepository documents, TextExtractor textExtractor,
+                              ChunkRepository chunks, Embedder embedder) {
         this.documents = documents;
         this.textExtractor = textExtractor;
         this.chunks = chunks;
+        this.embedder = embedder;
     }
 
     public record UploadResponse(Long id, String filename) {
@@ -72,6 +79,12 @@ public class DocumentController {
             position += 1;
         }
         chunks.saveAll(toSave);
+
+        if (!toSave.isEmpty()) {
+            float[] numbers = embedder.embed(toSave.get(0).getChunk());
+            log.info("Gemini returned {} numbers for chunk 0", numbers.length);
+        }
+
         return new UploadResponse(saved.getId(), saved.getFilename());
     }
 
