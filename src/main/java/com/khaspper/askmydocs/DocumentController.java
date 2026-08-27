@@ -76,13 +76,14 @@ public class DocumentController {
     }
 
     // One row of the list
-    public record DocumentSummary(Long id, String filename, Instant uploadedAt) {
+    public record DocumentSummary(Long id, String filename, Instant uploadedAt, long chunkCount) {
     }
 
     @GetMapping("/documents")
     public List<DocumentSummary> list() {
         return documents.findAll().stream()
-                .map(d -> new DocumentSummary(d.getId(), d.getFilename(), d.getUploadedAt()))
+                .map(d -> new DocumentSummary(d.getId(), d.getFilename(), d.getUploadedAt(),
+                        chunks.countByDocument(d)))
                 .toList();
     }
 
