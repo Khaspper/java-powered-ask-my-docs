@@ -75,15 +75,11 @@ public class DocumentController {
         int position = 0;
         for (String slice : slices) {
             Chunk chunk = new Chunk(slice, position, saved);
+            chunk.setEmbeddings(embedder.embed(slice));
             toSave.add(chunk);
             position += 1;
         }
         chunks.saveAll(toSave);
-
-        if (!toSave.isEmpty()) {
-            float[] numbers = embedder.embed(toSave.get(0).getChunk());
-            log.info("Gemini returned {} numbers for chunk 0", numbers.length);
-        }
 
         return new UploadResponse(saved.getId(), saved.getFilename());
     }
