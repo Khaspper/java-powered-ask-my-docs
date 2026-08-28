@@ -1,6 +1,7 @@
 package com.khaspper.askmydocs;
 
 import java.util.List;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,6 +10,8 @@ public interface ChunkRepository extends JpaRepository<Chunk, Long>{
 
     /** How many chunks belong to one document. */
     long countByDocument(Document document);
+
+    List<Chunk> findByEmbeddingsIsNullAndTriesLessThan(int tries, Limit limit);
 
     interface Match {
         Long getChunkId();
