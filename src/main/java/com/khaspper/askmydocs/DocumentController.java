@@ -39,7 +39,7 @@ public class DocumentController {
         this.embedder = embedder;
     }
 
-    public record UploadResponse(Long id, String filename) {
+    public record UploadResponse(Long id, String filename, int chunks, int embedded) {
     }
 
     @PostMapping("/documents")
@@ -73,15 +73,23 @@ public class DocumentController {
         List<String> slices = TextChunker.chunk(text);
         List<Chunk> toSave = new ArrayList<>();
         int position = 0;
+        int embedded = 0;
         for (String slice : slices) {
             Chunk chunk = new Chunk(slice, position, saved);
-            chunk.setEmbeddings(embedder.embed(slice));
+            try {
+                chunk.setEmbeddings(embedder.embed(slice));
+                embedded += 1;
+            } catch (Exception e) {
+                // Let the reaper take care of failed ones
+                chunk.increaseTries();
+                log.warn("Could not embed chunk {} of {}: {}", position, filename, e.toString());
+            }
             toSave.add(chunk);
             position += 1;
         }
         chunks.saveAll(toSave);
 
-        return new UploadResponse(saved.getId(), saved.getFilename());
+        return new UploadResponse(saved.getId(), saved.getFilename(), slices.size(), embedded);
     }
 
     // One row of the list
