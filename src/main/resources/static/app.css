@@ -9,7 +9,6 @@
   --accent-soft: #eef0ff;
   --good: #0f9d58;
   --bad: #d93025;
-  --warn: #b26b00;
   --radius: 14px;
   --shadow: 0 1px 2px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.06);
 }
@@ -25,7 +24,6 @@
     --accent-soft: #23233f;
     --good: #57d38c;
     --bad: #ff7b72;
-    --warn: #e3b341;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
   }
 }
@@ -50,7 +48,6 @@ header {
   border-bottom: 1px solid var(--line);
 }
 header h1 { font-size: 16px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
-header .sub { color: var(--muted); font-size: 13px; margin-left: 2px; }
 header h1 a { color: inherit; text-decoration: none; }
 header nav { margin-left: auto; }
 header nav a {
@@ -218,27 +215,11 @@ kbd {
 .page p { margin: 0 0 14px; }
 .page .lead { font-size: 17px; line-height: 1.6; }
 .page b { font-weight: 600; }
-.steps { list-style: none; counter-reset: n; margin: 0; padding: 0; }
-.steps li {
-  counter-increment: n; position: relative; padding: 0 0 16px 40px;
-}
-.steps li:before {
-  content: counter(n);
-  position: absolute; left: 0; top: 0;
-  width: 25px; height: 25px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--accent-soft); color: var(--accent);
-  font-size: 12px; font-weight: 700;
-}
-.steps li:not(:last-child):after {
-  content: ''; position: absolute; left: 12px; top: 29px; bottom: 4px; width: 1px; background: var(--line);
-}
 .facts { list-style: none; margin: 0; padding: 0; }
 .facts li { display: flex; gap: 14px; padding: 10px 0; border-top: 1px solid var(--line); }
 .facts li:first-child { border-top: 0; }
 .facts b { flex: none; width: 150px; font-weight: 550; }
 .facts span { color: var(--muted); }
-.quiet { color: var(--muted); font-size: 13.5px; }
 
 
 /* ---------- about page: diary ---------- */
