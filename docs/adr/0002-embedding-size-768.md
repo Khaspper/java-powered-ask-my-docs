@@ -10,3 +10,9 @@ documents) the larger sizes buy accuracy nobody will be able to measure.
 
 Changing the embedding model later is only cheap if the new model also produces
 768 numbers. Otherwise: new column, re-embed everything.
+
+**Tested 2026-08-29.** We did change the embedding model, from
+`gemini-embedding-2` to `nomic-embed-text`. It cost nothing precisely because
+`nomic-embed-text` is also 768 wide — the column, the rows already stored and
+the search query all kept working untouched. Had it been 1024 or 1536, every
+chunk in the database would have had to be thrown away and re-embedded.

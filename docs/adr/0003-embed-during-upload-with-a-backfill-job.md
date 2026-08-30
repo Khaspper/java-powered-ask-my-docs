@@ -2,7 +2,7 @@
 
 We embed every chunk while the upload request is still running, so a document is
 searchable the moment `POST /documents` returns. But we do not fail the whole
-upload when Gemini errors on a few chunks — those are saved with a null
+upload when the embedding model errors on a few chunks — those are saved with a null
 embedding and the request still returns 201. A `@Scheduled` job then finds
 null-embedding chunks and fills them in.
 
@@ -16,5 +16,6 @@ null-embedding chunks and fills them in.
 
 ## Consequences
 
-The job gives up on a chunk after 3 failed attempts, tracked in an `attempts`
-column, so one permanently-bad chunk cannot burn the API quota forever.
+The job gives up on a chunk after 3 failed attempts, tracked in the `tries`
+column, so one permanently-bad chunk cannot be retried forever. (The column is
+`tries`, not `attempts` — Hibernate named it from the Java field.)
