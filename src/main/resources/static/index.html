@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask my docs</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Ask my docs</a></h1>
+  <nav><a href="/about.html">About</a></nav>
+</header>
+
+<main>
+  <!-- ============ left ============ -->
+  <section>
+    <div class="card">
+      <h2>Add a file</h2>
+      <div class="body">
+        <div class="drop" id="drop">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v13"/>
+          </svg>
+          <div class="big">Drop a file here</div>
+          <div class="small">txt, md or pdf. 10 MB max.</div>
+        </div>
+        <input type="file" id="file" accept=".txt,.md,.pdf">
+        <div class="bar" id="bar"><i></i></div>
+        <div class="msg" id="upmsg"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Your files <span class="count" id="doccount">0</span></h2>
+      <ul class="docs" id="docs"></ul>
+      <div class="empty" id="docsempty">Nothing uploaded yet.</div>
+    </div>
+  </section>
+
+  <!-- ============ right ============ -->
+  <section>
+    <div class="card">
+      <h2>Ask a question</h2>
+      <div class="body">
+        <textarea id="q" placeholder="Type your question"></textarea>
+        <div class="row">
+          <button id="ask">Ask</button>
+          <button id="find" class="ghost">Just find chunks</button>
+          <span class="k">
+            <label for="k">chunks</label>
+            <span class="help" tabindex="0">?
+              <span class="tip">How many pieces of your files to pull in before answering.
+              More gives the model more to work with, but takes longer.</span>
+            </span>
+            <input type="number" id="k" value="5" min="1" max="20">
+          </span>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <span style="color:var(--muted);font-size:12.5px"><kbd>⌘</kbd> + <kbd>Enter</kbd> to ask</span>
+        </div>
+        <div class="msg" id="askmsg"></div>
+      </div>
+    </div>
+
+    <div class="card" id="answercard" style="display:none">
+      <h2>Answer</h2>
+      <div class="body">
+        <div class="answer" id="answer"></div>
+        <ul class="srcs" id="srcs"></ul>
+      </div>
+    </div>
+
+    <div class="card" id="slicecard" style="display:none">
+      <h2>Closest chunks <span class="count" id="slicecount">0</span></h2>
+      <div class="body" id="slices"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+/* ---------- little helpers ---------- */
+
+function show(el, text, kind) {
+  el.className = 'msg on ' + (kind || '');
+  el.innerHTML = text;
+}
+function hide(el) { el.className = 'msg'; }
+
+// Spring sends { status, error, message, path } when something goes wrong.
+async function problem(res) {
+  try {
+    const body = await res.json();
+    if (body.message) return body.message;
+    if (body.error) return body.error;
+  } catch (e) { /* not json */ }
+  return res.status + ' ' + res.statusText;
+}
+
+function ago(iso) {
+  const secs = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (secs < 60) return 'just now';
+  const mins = Math.round(secs / 60);
+  if (mins < 60) return mins + (mins === 1 ? ' minute ago' : ' minutes ago');
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+  const days = Math.round(hrs / 24);
+  if (days < 30) return days + (days === 1 ? ' day ago' : ' days ago');
+  return new Date(iso).toLocaleDateString();
+}
+
+function extOf(name) {
+  const dot = name.lastIndexOf('.');
+  return dot < 0 ? 'FILE' : name.slice(dot + 1).toUpperCase();
+}
+
+function escape(s) {
+  return String(s).replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---------- the list of files ---------- */
+
+async function loadDocs() {
+  let docs = [];
+  try {
+    const res = await fetch('/documents');
+    if (!res.ok) throw new Error();
+    docs = await res.json();
+  } catch (e) {
+    $('docsempty').textContent = 'Could not reach the app.';
+    $('docsempty').style.display = 'block';
+    $('docs').innerHTML = '';
+    return;
+  }
+
+  $('doccount').textContent = docs.length;
+  $('docsempty').style.display = docs.length ? 'none' : 'block';
+  $('docsempty').textContent = 'Nothing uploaded yet.';
+
+  docs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+  $('docs').innerHTML = docs.map((d) => `
+    <li>
+      <div class="ext">${escape(extOf(d.filename))}</div>
+      <div class="file">
+        <div class="name" title="${escape(d.filename)}">${escape(d.filename)}</div>
+        <div class="meta">#${d.id} · ${escape(ago(d.uploadedAt))}</div>
+      </div>
+      <div class="pill">${d.chunkCount} chunk${d.chunkCount === 1 ? '' : 's'}</div>
+    </li>`).join('');
+}
+
+/* ---------- uploading ---------- */
+
+const drop = $('drop');
+const bar = $('bar');
+const upmsg = $('upmsg');
+
+drop.addEventListener('click', () => $('file').click());
+$('file').addEventListener('change', (e) => {
+  if (e.target.files[0]) upload(e.target.files[0]);
+  e.target.value = '';
+});
+
+['dragenter', 'dragover'].forEach((n) =>
+  drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((n) =>
+  drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => {
+  const f = e.dataTransfer.files[0];
+  if (f) upload(f);
+});
+
+// XMLHttpRequest instead of fetch, only because it reports upload progress.
+function upload(file) {
+  bar.classList.add('on');
+  bar.firstElementChild.style.width = '0%';
+  show(upmsg, '<span class="spin"></span>Uploading ' + escape(file.name) + '…', 'work');
+
+  const form = new FormData();
+  form.append('file', file);
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/documents');
+
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      bar.firstElementChild.style.width = Math.round((e.loaded / e.total) * 100) + '%';
+    }
+  };
+
+  xhr.onload = () => {
+    bar.firstElementChild.style.width = '100%';
+    setTimeout(() => bar.classList.remove('on'), 500);
+
+    let body = {};
+    try { body = JSON.parse(xhr.responseText); } catch (e) { /* ignore */ }
+
+    if (xhr.status === 201) {
+      const missed = body.chunks - body.embedded;
+      let text = '<b>' + escape(body.filename) + '</b> is document #' + body.id + '. '
+        + body.chunks + ' chunk' + (body.chunks === 1 ? '' : 's') + '. '
+        + body.embedded + ' ready to search.';
+      if (missed > 0) {
+        text += ' ' + missed + ' failed. Retrying in one minute…';
+      }
+      show(upmsg, text, 'good');
+      loadDocs();
+    } else {
+      show(upmsg, escape(body.message || (xhr.status + ' ' + xhr.statusText)), 'bad');
+    }
+  };
+
+  xhr.onerror = () => {
+    bar.classList.remove('on');
+    show(upmsg, 'Could not reach the app. Is it running?', 'bad');
+  };
+
+  xhr.send(form);
+}
+
+/* ---------- asking ---------- */
+
+const askBtn = $('ask');
+const findBtn = $('find');
+const askmsg = $('askmsg');
+
+function question() {
+  const q = $('q').value.trim();
+  if (!q) {
+    show(askmsg, 'Type a question first.', 'bad');
+    $('q').focus();
+    return null;
+  }
+  hide(askmsg);
+  return { question: q, k: Number($('k').value) || 5 };
+}
+
+function busy(on, who) {
+  askBtn.disabled = findBtn.disabled = on;
+  if (on) show(askmsg, '<span class="spin"></span>' + who, 'work');
+}
+
+async function post(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(await problem(res));
+  return res.json();
+}
+
+askBtn.addEventListener('click', async () => {
+  const body = question();
+  if (!body) return;
+  busy(true, 'Reading your files…');
+  try {
+    const out = await post('/ask', body);
+    hide(askmsg);
+    renderAnswer(out);
+    $('slicecard').style.display = 'none';
+  } catch (e) {
+    show(askmsg, escape(e.message), 'bad');
+  } finally {
+    busy(false);
+  }
+});
+
+findBtn.addEventListener('click', async () => {
+  const body = question();
+  if (!body) return;
+  busy(true, 'Searching…');
+  try {
+    const hits = await post('/search', body);
+    hide(askmsg);
+    renderSlices(hits);
+    $('answercard').style.display = 'none';
+  } catch (e) {
+    show(askmsg, escape(e.message), 'bad');
+  } finally {
+    busy(false);
+  }
+});
+
+$('q').addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') askBtn.click();
+});
+
+function renderAnswer(out) {
+  $('answercard').style.display = '';
+  const unknown = out.answer.trim().toLowerCase().startsWith("i don't know");
+  $('answer').className = 'answer' + (unknown ? ' unknown' : '');
+  $('answer').textContent = out.answer;
+
+  if (!out.sources.length) {
+    $('srcs').innerHTML = '<div class="lbl">No chunks matched.</div>';
+    return;
+  }
+  $('srcs').innerHTML = '<div class="lbl">Chunks used</div>' + out.sources.map((s) => `
+    <li>
+      <div class="who">
+        <b>${escape(s.filename)}</b> <span>chunk #${s.chunkId}</span>
+      </div>
+      <div class="score">
+        <div class="track"><i style="width:${Math.round(s.score * 100)}%"></i></div>
+        <div class="num">${s.score.toFixed(2)}</div>
+      </div>
+    </li>`).join('');
+}
+
+function renderSlices(hits) {
+  $('slicecard').style.display = '';
+  $('slicecount').textContent = hits.length;
+  if (!hits.length) {
+    $('slices').innerHTML = '<div class="hint">Nothing came back. Upload a file first.</div>';
+    return;
+  }
+  $('slices').innerHTML = hits.map((h) => `
+    <div class="slice">
+      <div class="top">
+        <b>${escape(h.filename)}</b>
+        <span>chunk #${h.chunkId}</span>
+        <div class="score" style="margin-left:auto">
+          <div class="track"><i style="width:${Math.round(h.score * 100)}%"></i></div>
+          <div class="num">${h.score.toFixed(2)}</div>
+        </div>
+      </div>
+      <p>${escape(h.text)}</p>
+    </div>`).join('');
+}
+
+/* ---------- go ---------- */
+loadDocs();
+setInterval(loadDocs, 30000);   // the timed job can change these counts on its own
+</script>
+</body>
+</html>

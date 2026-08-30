@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About — Ask my docs</title>
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<header>
+  <h1><a href="/">Ask my docs</a></h1>
+  <nav><a href="/about.html" class="here">About</a></nav>
+</header>
+
+<div class="page">
+
+  <p class="lead">I am learning Java because the jobs I want ask for Java and Spring...
+    This is the project that I have built to learn it both... It's a simple RAG system basically it
+    holds documents the user uploads and answers the query using only what those documents contain.
+    I thought it would be a good idea (Nearly when I was done with the project) to just create an about page
+    to dump what happened while I was building this project.
+  </p>
+
+  <h2><span class="date">19 August</span> — the first night</h2>
+  <p>Four commits in seventy minutes</p>
+  <ul class="commits">
+    <li><time>21:01</time><span> Create my first spring boot quickstart</span></li>
+    <li><time>21:19</time><span> idiot</span></li>
+    <li><time>21:36</time><span> My first get request</span></li>
+    <li><time>22:10</time><span> learning what mvn is</span></li>
+  </ul>
+  <p>
+    The second commit is called <b>idiot</b> because I had generated the project
+    into a folder called <code>quickstart</code> and committed it that way so the
+    whole repository was a project inside a project... I honestly thought I could learn SpringBoot while learning...
+    But I couldn't because I literally didn't have ANY basic fundamental understanding of what maven is and SpringBoot.
+  </p>
+  <p>Then I stopped for five days.</p>
+
+  <h2><span class="date">19–24 August</span> — Gap</h2>
+  <p>
+    Basically I took 4-5 days to actually learn the basics of Java and SpringBoot and get SOMEWHAT comfortable
+    and learn what questions I SHOULD be asking when I'm stuck. I did not understand Java or SpringBoot well enough
+    to write the next line I could get a request to return the word <i>pong</i> and past that...
+    I was copying shapes and classes that I couldn't explain... So I stopped building and watched a Java and
+    SpringBoot course one of the long free ones on YouTube...
+  </p>
+
+  <h2><span class="date">24 August</span> — starting again</h2>
+  <p>I came back and didn't write a feature I wrote a plan first</p>
+  <p>I have built an entire production RAG system in (TS and Python) by myself before so I knew the system pretty well...
+    So with the help of AI I broke the whole app into a graph of nodes the smallest ones being the first ones to work on
+  </p>
+  <p>Meaning</p>
+  <p class="rule">What I learned worked well was dividing these nodes to "pure function" like... This node is small
+    enough if it only does one thing and the upper nodes can be built with the nodes underneath it... If that makes sense...
+  </p>
+  <p>
+    Every node got a line saying how I would know if the node was done for example a curl
+    command a SQL query a log line... This is the single thing that made the rest of "building via nodes"
+    easier because I never had to guess whether I was finished... I thought of it like a Test for each node
+  </p>
+  <p>I also started writing down decisions in short files one per decision with
+    the options I turned down just incase this bites me later down the project...
+    Then I added Postgres and pgvector in Docker and the documents table...
+  </p>
+
+  <h2><span class="date">26 August</span> — Most of the work</h2>
+  <p>
+    Seven commits... Upload with a duplicate check, the list endpoint, cutting text into chunks, the chunks table,
+    deleting a document along with its chunks, a chunk count on the list, then the first call to Gemini and the
+    first embeddings coming back, then saving those numbers next to the chunk
+  </p>
+  <p>The chunking is deliberately dumb... 1000 characters at a time each slice repeating the last 200 characters of the
+    one before it so a sentence cut in half still has part of the previous sentence context... This project was for me
+    to understand Java and SpringBoot not a RAG project
+  </p>
+
+  <h2><span class="date">27 August</span> — Chunk searching</h2>
+  <p>That morning I turned the question into embeddings the same way ask Postgres for the closest chunks...
+    Later that evening I built the answer generation... Hand the retrieved chunks to the model with one rule...
+    Answer only from the text given otherwise reply back saying it doesn't know...</p>
+  <p>Then between 18:48 and 18:59 I had four commits:</p>
+  <ul class="commits">
+    <li><time>18:48</time><span>Let failure happen and let reaper handle it</span></li>
+    <li><time>18:52</time><span>Get null embeddings with &lt; tries</span></li>
+    <li><time>18:54</time><span>make AskmydocsApplication have a timer basically a cron</span></li>
+    <li><time>18:59</time><span>background job fills in chunks that never got their embedding</span></li>
+  </ul>
+  <p>I purposely let failures happen... For this version for one failed call to Google threw away the entire upload.
+    basically upload a 40 page PDF and if Google failed on chunk 31 of 96 you basically lose it all... I have
+  PLAYED THESE GAMES BEFORE (Squid Games Season 2 Reference)... So I decided to build a reaper later</p>
+  <p>A chunk that fails is saved anyways with no embeddings and a counter bumped up by one and the upload still succeeds
+    it just tells you 96 chunks 95 with embeddings... A reaper wakes up every sixty seconds grabs up to fifty chunks that
+    have no embeddings and fewer than three attempts and tries again... Three retries and it leaves the chunk alone
+    forever (I did not build anything to handle this)
+  </p>
+  <p>
+    The two options I turned thought of and just rejected are: fail the whole upload (one fail / blip throws the
+    document) OR do no embedding during upload at all (fast uploads but nothing is searchable for up to a minute and
+    the response cannot tell you whether anything worked)
+  </p>
+
+  <h2>What I left out</h2>
+  <p>
+    No reranking no rewriting your question before searching no mixing keyword search with number search...
+    All three would give better answers... But I didn't want this project to get to big...
+  </p>
+
+  <h2>What it is built out of</h2>
+  <ul class="facts">
+    <li><b>Language</b><span>Java 21</span></li>
+    <li><b>Framework</b><span>Spring Boot 3</span></li>
+    <li><b>Database</b><span>Postgres with pgvector in Docker</span></li>
+    <li><b>Numbers</b><span>gemini-embedding-2 768 per chunk</span></li>
+    <li><b>Writing</b><span>gemini-3.7-flash</span></li>
+    <li><b>This page</b><span>plain HTML CSS and JavaScript</span></li>
+  </ul>
+
+</div>
+</body>
+</html>
