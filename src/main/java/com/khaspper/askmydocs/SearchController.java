@@ -30,7 +30,7 @@ public class SearchController {
     public List<SearchHit> search(@RequestBody SearchRequest request) {
         int k = request.k() == null ? DEFAULT_K : request.k();
 
-        float[] numbers = embedder.embed(request.question());
+        float[] numbers = embedder.embedQuery(request.question());
 
         return chunks.findClosest(asVectorText(numbers), k).stream()
                 .map(m -> new SearchHit(m.getChunkId(), m.getDocumentId(), m.getFilename(),

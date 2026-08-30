@@ -38,7 +38,7 @@ public class EmbeddingJob {
         int done = 0;
         for (Chunk chunk : waiting) {
             try {
-                chunk.setEmbeddings(embedder.embed(chunk.getChunk()));
+                chunk.setEmbeddings(embedder.embedDocument(chunk.getChunk()));
                 done += 1;
             } catch (Exception e) {
                 chunk.increaseTries();

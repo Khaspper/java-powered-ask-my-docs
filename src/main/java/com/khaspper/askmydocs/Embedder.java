@@ -9,36 +9,44 @@ import org.springframework.web.client.RestClient;
 @Component
 public class Embedder {
 
-    private static final String BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
-    private static final int DIMENSIONS = 768;
+    private static final String DOCUMENT_PREFIX = "search_document: ";
+    private static final String QUERY_PREFIX = "search_query: ";
 
-    private final RestClient http = RestClient.create();
+    private final RestClient http;
     private final String apiKey;
     private final String model;
 
-    public Embedder(@Value("${gemini.api-key}") String apiKey,
-                    @Value("${gemini.embedding-model}") String model) {
+    public Embedder(@Value("${llm.base-url}") String baseUrl,
+                    @Value("${llm.api-key}") String apiKey,
+                    @Value("${llm.embedding-model}") String model) {
+        this.http = RestClient.create(baseUrl);
         this.apiKey = apiKey;
         this.model = model;
     }
 
-    private record Embedding(List<Double> values) {
+    private record Item(List<Double> embedding) {
     }
 
-    private record EmbedResponse(Embedding embedding) {
+    private record EmbedResponse(List<Item> data) {
     }
 
-    public float[] embed(String text) {
+    public float[] embedDocument(String text) {
+        return embed(DOCUMENT_PREFIX + text);
+    }
+
+    public float[] embedQuery(String text) {
+        return embed(QUERY_PREFIX + text);
+    }
+
+    private float[] embed(String text) {
         EmbedResponse response = http.post()
-                .uri(BASE + model + ":embedContent")
-                .header("x-goog-api-key", apiKey)
-                .body(Map.of(
-                        "content", Map.of("parts", List.of(Map.of("text", text))),
-                        "outputDimensionality", DIMENSIONS))
+                .uri("/embeddings")
+                .header("Authorization", "Bearer " + apiKey)
+                .body(Map.of("model", model, "input", text))
                 .retrieve()
                 .body(EmbedResponse.class);
 
-        List<Double> values = response.embedding().values();
+        List<Double> values = response.data().get(0).embedding();
         float[] numbers = new float[values.size()];
         for (int i = 0; i < values.size(); i++) {
             numbers[i] = values.get(i).floatValue();

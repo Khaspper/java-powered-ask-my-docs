@@ -77,7 +77,7 @@ public class DocumentController {
         for (String slice : slices) {
             Chunk chunk = new Chunk(slice, position, saved);
             try {
-                chunk.setEmbeddings(embedder.embed(slice));
+                chunk.setEmbeddings(embedder.embedDocument(slice));
                 embedded += 1;
             } catch (Exception e) {
                 // Let the reaper take care of failed ones
