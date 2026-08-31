@@ -1,10 +1,8 @@
 package com.khaspper.askmydocs;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
-class AskmydocsApplicationTests {
+class AskmydocsApplicationTests extends IntegrationTestBase {
 
 	@Test
 	void contextLoads() {
