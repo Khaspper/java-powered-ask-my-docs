@@ -42,7 +42,7 @@ public class Embedder {
         EmbedResponse response = http.post()
                 .uri("/embeddings")
                 .header("Authorization", "Bearer " + apiKey)
-                .body(Map.of("model", model, "input", text))
+                .body(Map.of("model", model, "input", text, "dimensions", 768))
                 .retrieve()
                 .body(EmbedResponse.class);
 
