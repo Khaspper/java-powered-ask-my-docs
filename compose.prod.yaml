@@ -1,0 +1,35 @@
+# Start with docker compose -f compose.prod.yaml up -d --build
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    container_name: askmydocs-db
+    environment:
+      POSTGRES_DB: askmydocs
+      POSTGRES_USER: askmydocs
+      POSTGRES_PASSWORD: askmydocs
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U askmydocs"]
+      interval: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: askmydocs-app
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "80:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/askmydocs
+      LLM_BASE_URL: https://generativelanguage.googleapis.com/v1beta/openai
+      LLM_API_KEY: ${GEMINI_API_KEY}
+      LLM_EMBEDDING_MODEL: gemini-embedding-2
+      LLM_GENERATION_MODEL: gemini-3.7-flash
+    restart: unless-stopped
+
+volumes:
+  db-data:

@@ -40,3 +40,9 @@ HANDOFF.md
 handoff/
 GRAPH.md
 SPEC.md
+
+# CDK build output
+infra/cdk.out/
+infra/target/
+infra/cdk.context.json
+RESUME-CONTEXT.md

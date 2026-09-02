@@ -1,0 +1,3 @@
+{
+  "app": "./mvnw -e -q compile exec:java"
+}

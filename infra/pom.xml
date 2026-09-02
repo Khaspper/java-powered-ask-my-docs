@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.khaspper</groupId>
+	<artifactId>infra</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+
+	<properties>
+		<maven.compiler.release>21</maven.compiler.release>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<dependencies>
+		<!-- Every AWS thing you can describe, as Java classes. -->
+		<dependency>
+			<groupId>software.amazon.awscdk</groupId>
+			<artifactId>aws-cdk-lib</artifactId>
+			<version>2.199.0</version>
+		</dependency>
+		<dependency>
+			<groupId>software.constructs</groupId>
+			<artifactId>constructs</artifactId>
+			<version>[10.0.0,11.0.0)</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<!-- Lets the cdk command run our main method. -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.5.0</version>
+				<configuration>
+					<mainClass>com.khaspper.infra.InfraApp</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
